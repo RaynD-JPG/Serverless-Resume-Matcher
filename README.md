@@ -1,3 +1,4 @@
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://serverlessresumematcher.streamlit.app/)
 # 📄 AI Resume Matcher Pro
 
 A serverless, cloud-native application that analyzes resumes against job descriptions using Google Gemini 2.5-Flash-Lite and Azure Functions.
