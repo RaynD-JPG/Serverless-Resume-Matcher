@@ -4,11 +4,11 @@ from google import genai
 from google.genai import types
 import json
 
+app = func.FunctionApp() # This line is mandatory for Python v2
 # Azure fetches this from the 'App Settings' configuration in the portal
 API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
 
-app = func.FunctionApp()
 
 @app.route(route="analyze", auth_level=func.AuthLevel.FUNCTION)
 def resume_matcher_func(req: func.HttpRequest) -> func.HttpResponse:

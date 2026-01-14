@@ -1,21 +1,24 @@
 import streamlit as st
-from google import genai
-from google.genai import types
+import requests  # Required to talk to your Azure Function
+import base64    # Required to encode the PDF for transport
+import os
+from dotenv import load_dotenv #
 
+load_dotenv()
 # --- CONFIGURATION ---
-API_KEY = "AIzaSyBBe9wTr90nnVD6dxY5ppdzDgVp1A08leY"
-client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
-
-st.set_page_config(page_title="AI Resume Matcher", page_icon="📄")
+# IMPORTANT: Replace this with the URL you copied from VS Code or the Azure Portal
+AZURE_FUNCTION_URL = os.getenv("AZURE_FUNCTION_URL")
+st.set_page_config(page_title="AI Resume Matcher Pro", page_icon="📄")
 
 st.title("📄 AI Resume Matcher Pro")
-st.markdown("Upload your resume and paste a job description to see how well you match.")
+st.markdown("Upload your resume and paste a job description to see how well you match using our **Azure Serverless Backend**.")
 
-# --- SIDEBAR: Settings ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("Settings")
-    model_choice = st.selectbox("Select Model", ["gemini-2.5-flash-lite", "gemini-1.5-flash-8b"])
-    st.info("Using 2.5-Flash-Lite for best free-tier stability.")
+    st.info("Backend: Azure Functions (Python)\nAI Engine: Gemini 2.5-Flash-Lite")
+    st.markdown("---")
+    st.markdown("Created by Rayn Shamieh")
 
 # --- MAIN INTERFACE ---
 col1, col2 = st.columns(2)
@@ -26,34 +29,38 @@ with col1:
 
 with col2:
     st.subheader("2. Job Description")
-    jd_text = st.text_area("Paste the Job Description here", height=200)
+    jd_text = st.text_area("Paste the Job Description here", height=250)
 
+# --- ANALYSIS TRIGGER ---
 if st.button("Analyze Match"):
     if uploaded_file and jd_text:
-        with st.spinner("🤖 Gemini is analyzing your profile..."):
+        with st.spinner("🤖 Sending data to Azure Serverless Backend..."):
             try:
-                # Prepare prompt
-                prompt = f"Analyze this Resume PDF against the JD: {jd_text}. Provide Match Score (%), Missing Skills, and 3 specific Improvements."
+                # 1. Convert PDF bytes to base64 string for JSON transport
+                pdf_bytes = uploaded_file.getvalue()
+                encoded_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
                 
-                # Call Gemini
-                response = client.models.generate_content(
-                    model=model_choice,
-                    contents=[
-                        types.Part.from_bytes(
-                            data=uploaded_file.getvalue(),
-                            mime_type='application/pdf'
-                        ),
-                        prompt
-                    ]
-                )
+                # 2. Construct the data payload for your Azure Function
+                payload = {
+                    "resume_bytes": encoded_pdf,
+                    "jd_text": jd_text
+                }
                 
-                # Display Results
-                st.success("Analysis Complete!")
-                st.markdown("### 📊 Report")
-                st.write(response.text)
+                # 3. Call the Cloud API
+                response = requests.post(AZURE_FUNCTION_URL, json=payload)
                 
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
-    else:
-        st.warning("Please upload a PDF and provide a Job Description.")
+                # 4. Display the results
+                if response.status_code == 200:
+                    analysis_data = response.json()
+                    report = analysis_data.get("analysis", "No analysis returned.")
+                    
+                    st.success("Analysis Complete!")
+                    st.markdown("### 📊 AI Analysis Report")
+                    st.markdown(report)
+                else:
+                    st.error(f"Azure Backend Error ({response.status_code}): {response.text}")
 
+            except Exception as e:
+                st.error(f"Connection Error: Could not reach Azure. Ensure your URL is correct. Details: {str(e)}")
+    else:
+        st.warning("Please provide both a Resume PDF and a Job Description.")

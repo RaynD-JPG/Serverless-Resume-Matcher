@@ -3,7 +3,9 @@ from google import genai
 from google.genai import types
 
 # --- CONFIGURATION ---
-API_KEY = "AIzaSyBBe9wTr90nnVD6dxY5ppdzDgVp1A08leY" 
+import os
+# This looks for the key in your computer's hidden settings
+API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
 
 def get_first_pdf():

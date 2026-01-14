@@ -1,5 +1,10 @@
-venv/
+# Secrets and Environment Variables
 .env
-__pycache__/
-*.pdf
 local.settings.json
+
+# Python Virtual Environments
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
