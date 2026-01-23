@@ -4,7 +4,6 @@ from google.genai import types
 
 # --- CONFIGURATION ---
 import os
-# This looks for the key in your computer's hidden settings
 API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=API_KEY, http_options={'api_version': 'v1beta'})
 
