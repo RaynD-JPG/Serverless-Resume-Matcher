@@ -1,12 +1,11 @@
 import streamlit as st
-import requests  # Required to talk to your Azure Function
-import base64    # Required to encode the PDF for transport
+import requests
+import base64   
 import os
 from dotenv import load_dotenv #
 
 load_dotenv()
 # --- CONFIGURATION ---
-# IMPORTANT: Replace this with the URL you copied from VS Code or the Azure Portal
 AZURE_FUNCTION_URL = os.getenv("AZURE_FUNCTION_URL")
 st.set_page_config(page_title="AI Resume Matcher Pro", page_icon="📄")
 
@@ -31,25 +30,19 @@ with col2:
     st.subheader("2. Job Description")
     jd_text = st.text_area("Paste the Job Description here", height=250)
 
-# --- ANALYSIS TRIGGER ---
 if st.button("Analyze Match"):
     if uploaded_file and jd_text:
         with st.spinner("🤖 Sending data to Azure Serverless Backend..."):
             try:
-                # 1. Convert PDF bytes to base64 string for JSON transport
                 pdf_bytes = uploaded_file.getvalue()
                 encoded_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
-                
-                # 2. Construct the data payload for your Azure Function
                 payload = {
                     "resume_bytes": encoded_pdf,
                     "jd_text": jd_text
                 }
                 
-                # 3. Call the Cloud API
                 response = requests.post(AZURE_FUNCTION_URL, json=payload)
                 
-                # 4. Display the results
                 if response.status_code == 200:
                     analysis_data = response.json()
                     report = analysis_data.get("analysis", "No analysis returned.")
